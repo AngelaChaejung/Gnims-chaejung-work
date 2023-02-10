@@ -66,6 +66,7 @@ const ScheduleAdd = () => {
         time: time,
         subject: subject,
         content: content,
+        participantsId: participants,
       };
       //     // await dispatch(__addSchedule(newSchedule));
       //     // setTodo("");
