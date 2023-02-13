@@ -50,7 +50,7 @@ const NaverLogin = () => {
 
   const sendTokenAndGetAuthorization = async () => {
     const { data } = await axios
-      .get(`http://hayangaeul.shop/naver/login`, {
+      .get(`hayangaeul.shop/naver/login`, {
         headers: { token: localStorage.getItem("NaverAuthorization") },
       })
       .then((res) => {
