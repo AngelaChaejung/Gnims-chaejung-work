@@ -13,13 +13,13 @@ const KebabModal = ({ setModalOpen, modalOpen }) => {
         <button onClick={closeModal}>x</button>
         <div
           onClick={scheduleEditHandler}
-          className="text-[#12396F] pt-[23px] h-[57px] border-solid border-[1px]"
+          className="text-[#12396F] pt-[23px] h-[57px] border-solid border-b-[1px]"
         >
           수정
         </div>
         <div
           onClick={scheduleDeleteHandler}
-          className="text-[#DE0D0D] h-[60px]"
+          className="text-[#DE0D0D] h-[60px] pt-[23px] "
         >
           삭제
         </div>
