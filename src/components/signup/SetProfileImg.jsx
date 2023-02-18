@@ -5,6 +5,7 @@ import { SignupApi } from "../../api/Signup";
 import IsModal from "../modal/Modal";
 import axios from "axios";
 import { useNavigate } from "react-router";
+import { instance } from "../../shared/AxiosInstance";
 
 const SetProfileImg = () => {
   const navigate = useNavigate();
@@ -36,6 +37,7 @@ const SetProfileImg = () => {
     //폼데이터 변환
     setImageFile(imgRef.current.files[0]);
     const imgFile = imgRef.current.files[0];
+    console.log(imgFile);
     const formData = new FormData();
     if (imgFile !== undefined) {
       formData.append("image", imgFile);
@@ -44,6 +46,7 @@ const SetProfileImg = () => {
     }
 
     if (singup === "emailLogin") {
+      //const url = "http://hayangaeul.shop/auth/signup";
       const url = "https://eb.jxxhxxx.shop/auth/signup";
       const data = {
         username: userInfo.username,
@@ -53,14 +56,14 @@ const SetProfileImg = () => {
       };
       sginupAxios({ data, formData, url });
     } else {
+      //const url = "http://hayangaeul.shop/social/signup";
       const url = "https://eb.jxxhxxx.shop/social/signup";
       const data = {
-        username: NameNickName.nickname,
-        nickname: NameNickName.username,
+        username: NameNickName.username,
+        nickname: NameNickName.nickname,
         email: window.localStorage.getItem("email"),
         socialCode: window.localStorage.getItem("socialCode"),
       };
-
       //소셜 회원가입 API가 나왔을때
       sginupAxios({ data, formData, url });
     }
@@ -125,7 +128,7 @@ const SetProfileImg = () => {
             <label htmlFor="profileImg">
               <div className=" h-[86px] w-[86px] justify-center mx-auto">
                 <img
-                  className="rounded-full h-full w-full"
+                  className="w-full h-full rounded-full"
                   src={image}
                   alt="프로필이미지"
                 />
