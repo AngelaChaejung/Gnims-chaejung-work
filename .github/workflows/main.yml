@@ -28,7 +28,8 @@ jobs:
 
       - name: Build
         run: yarn build
-        env: CI=false
+          env: 
+            CI: false
 
       - name: Deploy
         env:
