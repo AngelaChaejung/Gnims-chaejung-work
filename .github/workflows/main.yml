@@ -27,7 +27,8 @@ jobs:
         run: yarn install
 
       - name: Build
-        run: yarn build
+        run: run: CI='false' yarn build
+
 
       - name: Deploy
         env:
