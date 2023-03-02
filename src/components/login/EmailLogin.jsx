@@ -178,7 +178,7 @@ const EmailLogin = () => {
                     id="userEmail"
                     ref={userEmailRef}
                     onChange={onValidity}
-                    placeholder="아이디(이메일) 입력"
+                    placeholder="아이디(이메일) 입력(배포확인)"
                     shadow={style.shadowEmail}
                     bgColor={style.bgColorEmail}
                   />
