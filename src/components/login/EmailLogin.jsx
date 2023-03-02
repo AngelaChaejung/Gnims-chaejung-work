@@ -9,7 +9,9 @@ import { __emailLogin } from "../../redux/modules/LoginSlice";
 import { useDispatch, useSelector } from "react-redux";
 import NaverLogin from "../../page/NaverLoginPage";
 import Label from "../layout/Label";
-import LoginSignupInputBox from "../layout/LoginSignupInputBox";
+import LoginSignupInputBox from "../layout/input/LoginSignupInputBox";
+import gnimsLogo from "../../img/gnimslogo1.png";
+import { EventSourcePolyfill } from "event-source-polyfill";
 
 const EmailLogin = () => {
   const dispatch = useDispatch();
@@ -19,9 +21,13 @@ const EmailLogin = () => {
     modalTitle: "",
     modalMessage: "",
   });
-  const { isLoading } = useSelector((state) => state.LoginSlice);
+  const [style, setStyle] = useState({
+    bgColorEmail: "bg-inputBox",
+    bgColorPassword: "bg-inputBox",
+    shadowEmail: "",
+    shadowPassword: "",
+  });
 
-  console.log(isLoading);
   //서버에 전달하기 위한 input Ref 생성
   const userEmailRef = useRef();
   const userPasswordRef = useRef();
@@ -35,17 +41,42 @@ const EmailLogin = () => {
   //이메일, 비밀번호 정규 표현식
   const emailRegulationExp =
     /^[a-zA-Z0-9+-\_.]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/;
-  const passwordRegulationExp = /^(?=.*[a-zA-Z])(?=.*\d)[a-zA-Z\d]{9,20}$/;
+  const passwordRegulationExp = /^(?=.*[a-zA-Z])(?=.*\d)[a-zA-Z\d]{8,16}$/;
 
   //유효성검사
   const onValidity = (event) => {
     const { id, value } = event.target;
-
     if (id === "userEmail") {
+      setStyle(() => ({
+        ...style,
+        bgColorEmail: "bg-inputBoxFocus",
+        shadowEmail: "drop-shadow-inputBoxShadow",
+      }));
+      if (value.trim() === "") {
+        setStyle(() => ({
+          ...style,
+          bgColorEmail: "bg-inputBox",
+          shadowEmail: "",
+        }));
+      }
       if (!emailRegulationExp.test(value)) {
         SetRegulation(() => ({ ...regulation, regulationEmail: false }));
-      } else SetRegulation(() => ({ ...regulation, regulationEmail: true }));
+      } else {
+        SetRegulation(() => ({ ...regulation, regulationEmail: true }));
+      }
     } else {
+      setStyle(() => ({
+        ...style,
+        bgColorPassword: "bg-inputBoxFocus",
+        shadowPassword: "drop-shadow-inputBoxShadow",
+      }));
+      if (value.trim() === "") {
+        setStyle(() => ({
+          ...style,
+          bgColorPassword: "bg-inputBox",
+          shadowPassword: "",
+        }));
+      }
       if (!passwordRegulationExp.test(value)) {
         SetRegulation(() => ({ ...regulation, regulationPassword: false }));
       } else SetRegulation(() => ({ ...regulation, regulationPassword: true }));
@@ -59,11 +90,28 @@ const EmailLogin = () => {
   const onMoalClose = () => {
     setOpen({ isOpen: false });
   };
-
+  let eventSource;
+  const fetchSse = async () => {
+    try {
+      //EventSource생성.
+      eventSource = new EventSourcePolyfill("https://eb.jxxhxxx.shop/connect", {
+        //headers에 토큰을 꼭 담아줘야 500이 안뜬다.
+        headers: {
+          Authorization: sessionStorage.getItem("accessToken"),
+        },
+        withCredentials: true,
+      });
+      // SSE 연결 성공 시 호출되는 이벤트 핸들러
+      eventSource.onopen = () => {
+        console.log("SSE 연결완료");
+      };
+    } catch (error) {
+      console.log("에러발생:", error);
+    }
+  };
   //서버에 전달
-  const onSubmit = (event) => {
+  const onSubmit = async (event) => {
     event.preventDefault();
-
     const userEmailCurrent = userEmailRef.current;
     const userPasswordCurrent = userPasswordRef.current;
     const emailValue = userEmailCurrent.value;
@@ -90,7 +138,7 @@ const EmailLogin = () => {
       return;
     }
 
-    dispatch(
+    await dispatch(
       __emailLogin({
         email: emailValue,
         password: passwordValue,
@@ -99,6 +147,7 @@ const EmailLogin = () => {
         setModalStr,
       })
     );
+    onSubmit().then(fetchSse());
   };
 
   //카카오 로그인
@@ -107,13 +156,13 @@ const EmailLogin = () => {
   };
 
   return (
-    <div className="container md">
-      <div className="ml-[20px] mr-[20px]">
-        <div className="grid grid-rows ">
-          <div className=" h-[150px] mt-[94px]">
-            <div className="mx-auto w-[87px] h-[64px] overflow-hidden gap-[10px] ">
+    <div className="container h-full md ">
+      <div className="ml-[20px] mr-[20px] ">
+        <div className="grid grid-rows mt-[100px]">
+          <div className="h-[150px]">
+            <div className="mx-auto  w-[150px] h-[64px] overflow-hidden gap-[10px] ">
               <img
-                src="https://pbs.twimg.com/media/FACQ9-hUcAcA_11.jpg "
+                src={gnimsLogo}
                 alt="곰캐릭터가 우쭐거리며 왠지 잘될 것 같은 기분포즈 중"
                 className="h-full w-full "
               />
@@ -125,10 +174,13 @@ const EmailLogin = () => {
                 <div className=" grid grid-row-2">
                   <Label htmlFor="userEmail">이메일</Label>
                   <LoginSignupInputBox
+                    type="email"
                     id="userEmail"
                     ref={userEmailRef}
                     onChange={onValidity}
                     placeholder="아이디(이메일) 입력"
+                    shadow={style.shadowEmail}
+                    bgColor={style.bgColorEmail}
                   />
                 </div>
                 <div className="flex items-center ">
@@ -144,10 +196,13 @@ const EmailLogin = () => {
                 <div className="grid grid-row-2">
                   <Label htmlFor="userPassword">비밀번호</Label>
                   <LoginSignupInputBox
+                    type="password"
                     ref={userPasswordRef}
                     onChange={onValidity}
                     id="userPassword"
                     placeholder="비밀번호 입력"
+                    shadow={style.shadowPassword}
+                    bgColor={style.bgColorPassword}
                   />
                 </div>
                 <div className="flex items-center ">
@@ -159,6 +214,7 @@ const EmailLogin = () => {
                   </p>
                 </div>
               </div>
+
               <button
                 onClick={onSubmit}
                 className="h-[50px] rounded w-full bg-[#002C51] font-[700] text-[#ffff] mt-[24px]"
@@ -168,14 +224,17 @@ const EmailLogin = () => {
             </div>
           </form>
           <div className="mt-[26px] grid grid-cols-2 text-center">
-            <div>
-              <button className="text-[#12396F] text-[16px] font-[400] px-[30px] py-[10px]">
+            <div className="border-4 border-indigo-600">
+              <button
+                className="text-textBlack text-[16px] font-[400] px-[30px] py-[10px]"
+                onClick={() => navigate("/login/auth/InputEmail")}
+              >
                 비밀번호 재설정
               </button>
             </div>
             <div>
               <button
-                className="text-[#12396F] text-[16px] font-[400] px-[30px] py-[10px] "
+                className="text-textBlack text-[16px] font-[400] px-[30px] py-[10px] "
                 onClick={() => navigate(`/signup`)}
               >
                 회원가입

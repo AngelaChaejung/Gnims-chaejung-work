@@ -5,43 +5,39 @@ import { LoginApi } from "../../api/LoginApi";
 import { setSingup } from "./SingupSlice";
 
 //이메일 로그인
-export const __emailLogin = ({
-  email,
-  password,
-  navigate,
-  onModalOpen,
-  setModalStr,
-}) => {
-  return async function (dispatch) {
-    await LoginApi.EmailLogin({ email: email, password: password })
-      .then((response) => {
-        const accessToken = response.headers.get("Authorization");
-        console.log(response);
-        const { email, nickname, profileImage } = response.data.data;
 
-        
-        localStorage.setItem("accessToken", accessToken);
-        localStorage.setItem("email", email);
-        localStorage.setItem("nickname", nickname);
-        localStorage.setItem("profileImage", profileImage);
-        alert(`${nickname}님 어서오세요.`);
-        navigate("/main");
-      })
-      .catch((error) => {
-        console.log(error);
-        const { data } = error.response;
-        console.log(data);
-        if (data.status === 401) {
-          setModalStr({
-            modalTitle: "ID를 찾을 수 없어요.",
-            modalMessage:
-              "아이디(이메일)과 비밀번호를    다시 한 번 확인해주세요.",
-          });
-          onModalOpen();
-        }
+export const __emailLogin = createAsyncThunk(
+  "login/EmailLogin",
+  async (payload, thunkAPI) => {
+    try {
+      const data = await LoginApi.EmailLogin({
+        email: payload.email,
+        password: payload.password,
       });
-  };
-};
+      console.log(data);
+      const accessToken = data.headers.get("Authorization");
+      const { email, nickname, profileImage, userId } = data.data.data;
+      sessionStorage.setItem("accessToken", accessToken);
+      sessionStorage.setItem("userId", userId);
+      sessionStorage.setItem("email", email);
+      sessionStorage.setItem("nickname", nickname);
+      sessionStorage.setItem("profileImage", profileImage);
+      alert(`${nickname}님 어서오세요.`);
+      window.location.href = "/main";
+    } catch (error) {
+      console.log(error);
+      const { data } = error.response;
+      console.log(data);
+      if (data.status === 401) {
+        payload.setModalStr({
+          modalTitle: "ID를 찾을 수 없어요.",
+          modalMessage: "이메일와 비밀번호를  \n  다시 한 번 확인해주세요.",
+        });
+        payload.onModalOpen();
+      }
+    }
+  }
+);
 
 //카카오 로그인
 export const __kakaologin = createAsyncThunk(
@@ -53,15 +49,15 @@ export const __kakaologin = createAsyncThunk(
       const data = await instance.post("/kakao/login", { code }).then((res) => {
         console.log("서버에서 보내는값?", res.data.data);
         const email = res.data.data.email;
-        localStorage.setItem("email", email);
-        localStorage.setItem("socialCode", "KAKAO");
+        sessionStorage.setItem("email", email);
+        sessionStorage.setItem("socialCode", "KAKAO");
 
         if (res.data.message !== "non-member") {
           const accessToken = res.headers.get("Authorization");
           const nickname = res.data.data.nickname;
           console.log(nickname);
-          localStorage.setItem("token", accessToken);
-          localStorage.setItem("nickname", nickname);
+          sessionStorage.setItem("token", accessToken);
+          sessionStorage.setItem("nickname", nickname);
           alert("그님스에 오신걸 환영합니다");
           return window.location.assign("/main");
 
@@ -111,6 +107,9 @@ const LoginSlice = createSlice({
     },
     setMessage: (state, action) => {
       state.message = action.payload;
+    },
+    setEmail: (state, action) => {
+      state.email = action.payload;
     },
   },
   extraReducers: {

@@ -1,24 +1,30 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import basicImg from "../../img/User-86.png";
+import LoadingPage from "../../page/LoadingPage";
 import { __getInvitation } from "../../redux/modules/InvitationSlice";
 import InvitationCard from "./ InvitationCard";
+import PageInfoCard from "./PageInfoCard";
 
 const ScheduleInvitation = () => {
-  localStorage.setItem("nickname", "동퐈");
-  const nickname = localStorage.getItem("nickname");
-
+  const nickname = sessionStorage.getItem("nickname");
+  const profileImage = sessionStorage.getItem("profileImage");
   const dispatch = useDispatch();
-  const { isLoading, error, data } = useSelector(
+
+  const { isLoading, error, invitation } = useSelector(
     (state) => state.InvitationSlice
   );
+  console.log("무슨 스테이트?", invitation);
 
   useEffect(() => {
     dispatch(__getInvitation());
-  }, []);
+  }, [dispatch]);
 
   if (isLoading) {
-    return <div>로딩 중....</div>;
+    return (
+      <div>
+        <LoadingPage />
+      </div>
+    );
   }
 
   if (error) {
@@ -28,19 +34,12 @@ const ScheduleInvitation = () => {
   return (
     <div>
       <div className="flex p-5 gap-[30px] justify-items-center">
-        <div className="flex-none p-2 w-[86px] h-[86px] border-2 border-solid border-red-500">
-          <img className="rounded-full" src={basicImg} />
-        </div>
-        <div className="pt-2 border-2 border-red-500 border-solid">
-          <div className="text-[18px] pt-[12px] leading-[21px]">
-            <span>
-              {nickname} 님에게 온 일정 초대를 한 번에 확인 할 수 있습니다.
-            </span>
-          </div>
-        </div>
+        <PageInfoCard profileImg={profileImage} nickname={nickname}>
+          에게 온 일정 초대를 한 번에 볼 수 있어요.
+        </PageInfoCard>
       </div>
       <div>
-        {data.map((invit) => (
+        {invitation.map((invit) => (
           <InvitationCard key={invit.eventId} invit={invit} />
         ))}
       </div>

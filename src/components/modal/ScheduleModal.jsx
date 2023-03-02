@@ -6,17 +6,17 @@ const ScheduleModal = ({ setModalOpen }) => {
   };
 
   return (
-    <div className="h-screen w-[375px] bg-black bg-opacity-50 flex justify-center fixed items-center">
-      <div className="text-textNavy pt-8 items-center w-[300px] h-[167px] absolute text-center rounded-[16px] bg-white">
+    <div className="h-screen w-[375px] bg-black bg-opacity-50 flex justify-center z-10 fixed items-center mt-[-48px]">
+      <div className="pt-8 items-center w-[300px] h-[167px] text-center fixed top-[230px] rounded-[16px] bg-white">
         <div className="text-[18px] font-bold flex flex-col">
           일정을 추가할 수 없어요.
         </div>
-        <div className="mt-[14px] text-[14px]">
+        <div className="mt-[14px] text-[14px] text-[#6F6F6F]">
           날짜와 시간, 일정제목은 <br />
           필수 입력사항이예요.
         </div>
         <button
-          className="bg-[#002C51] h-[40px] w-[268px] text-white mt-[18px]"
+          className="bg-[#002C51] h-[40px] w-[268px] text-white mt-[18px] rounded-[4px]"
           onClick={closeModal}
         >
           확인
