@@ -24,6 +24,6 @@ yarn-error.log*
 
 node_modules
 yarn-error.log
-*.json
+
 
 *.env
