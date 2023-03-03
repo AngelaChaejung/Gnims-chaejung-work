@@ -19,7 +19,7 @@ const ScheduleAdd = () => {
   const navigate = useNavigate();
   //스케줄 추가, 수정 분기를 결정할 state 값을 받아옴
   const { state } = useLocation();
-
+console.log("hi")
   useEffect(() => {
     if (state.type === "edit") {
       dispatch(__getScheduleDetail(state.id));
