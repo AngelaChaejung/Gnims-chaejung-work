@@ -9,7 +9,7 @@ const initialState = {
   schedules: [],
   oldschedules: [],
   pastSchedules: [],
-  scrollPage: 1,
+  scrollPage: 0,
   id: 0,
   cardColor: "",
   date: null,
@@ -62,8 +62,22 @@ export const __getScrollPage = createAsyncThunk(
           payload.endRef.current = true;
           return thunkAPI.fulfillWithValue(data.data.data);
         }
-
         payload.preventRef.current = true;
+        return thunkAPI.fulfillWithValue(data.data.data);
+      }
+      return thunkAPI.fulfillWithValue(data.data);
+    } catch (error) {
+      // console.log(error);
+    }
+  }
+);
+
+export const __getFirstPage = createAsyncThunk(
+  "schedule/getFirstPage",
+  async (payload, thunkAPI) => {
+    try {
+      const data = await ScheduleApi.getInfiniteScrollPage(payload);
+      if (data.status === 200) {
         return thunkAPI.fulfillWithValue(data.data.data);
       }
       return thunkAPI.fulfillWithValue(data.data);
@@ -78,10 +92,6 @@ export const __postSchedule = createAsyncThunk(
   async (payload, thunkAPI) => {
     try {
       const data = await ScheduleApi.postScheduleApi(payload.Schedule);
-      payload.dispatch(__getSchedule(payload.userId));
-      if (data.status === 201) {
-      }
-      // return thunkAPI.fulfillWithValue(data.data);
     } catch (error) {
       return thunkAPI.rejectWithValue(error);
     }
@@ -119,8 +129,14 @@ export const ScheduleSlice = createSlice({
     pagePlus: (state, action) => {
       state.scrollPage = action.payload + 1;
     },
+    pageReset: (state, action) => {
+      state.scrollPage = 0;
+    },
     scheduleReset: (state) => {
       state.oldschedules = [];
+    },
+    mainScheduleReset: (state) => {
+      state.schedules = [];
     },
   },
   extraReducers: {
@@ -172,8 +188,20 @@ export const ScheduleSlice = createSlice({
       state.isLoading = false;
       state.error = action.payload;
     },
+
+    // [__postSchedule.pending]: (state) => {
+    //   state.isLoading = true;
+    // },
+    // [__postSchedule.fulfilled]: (state, action) => {
+    //   state.isLoading = false;
+    // },
+    // [__postSchedule.rejected]: (state, action) => {
+    //   state.isLoading = false;
+    //   state.error = action.payload;
+    // },
   },
 });
 
-export const { pagePlus, scheduleReset } = ScheduleSlice.actions;
+export const { pagePlus, scheduleReset, mainScheduleReset, pageReset } =
+  ScheduleSlice.actions;
 export default ScheduleSlice.reducer;

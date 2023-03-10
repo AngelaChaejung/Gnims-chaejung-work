@@ -2,13 +2,17 @@ import React, { useState, useEffect, useRef } from "react";
 
 import MainScheduleCards from "./MainScheduleCards";
 import { useDispatch, useSelector } from "react-redux";
-import { __getScrollPage } from "../../redux/modules/ScheduleSlice";
+import {
+  __getScrollPage,
+  mainScheduleReset,
+} from "../../redux/modules/ScheduleSlice";
 import MoonLoader from "react-spinners/MoonLoader";
 
 const InfiniteScroll = () => {
   const dispatch = useDispatch();
+
   const { schedules, isLoading } = useSelector((state) => state.ScheduleSlice);
-  //페이징 생성
+
   const [page, setPage] = useState(0);
   //중복 실행 방저
   const preventRef = useRef(true);
@@ -16,14 +20,20 @@ const InfiniteScroll = () => {
   const endRef = useRef(false);
   //옵저버 확인
   const observerRef = useRef(null);
-  const userId = sessionStorage.getItem("userId");
+
+  console.log("Page불러오기", page);
 
   //옵저버 핸들링 함수
   const observerHandler = ([entries], observer) => {
     if (entries.isIntersecting && !endRef.current) {
       if (page !== 0) {
         dispatch(
-          __getScrollPage({ userId: userId, page: page, endRef, preventRef })
+          __getScrollPage({
+            userId: sessionStorage.getItem("userId"),
+            page: page,
+            endRef,
+            preventRef,
+          })
         );
       }
       observer.unobserve(entries.target);
@@ -32,10 +42,19 @@ const InfiniteScroll = () => {
   };
 
   useEffect(() => {
-    const userId = sessionStorage.getItem("userId");
     dispatch(
-      __getScrollPage({ userId: userId, page: page, endRef, preventRef })
+      __getScrollPage({
+        userId: sessionStorage.getItem("userId"),
+        page: page,
+        endRef,
+        preventRef,
+      })
     );
+    console.log("useEffect");
+    return () => {
+      dispatch(mainScheduleReset());
+      setPage((prev) => (prev = 0));
+    };
   }, []);
 
   useEffect(() => {
@@ -43,6 +62,7 @@ const InfiniteScroll = () => {
       threshold: 0.5,
     });
     if (observerRef.current) observer.observe(observerRef.current);
+    console.log("useEffect1");
     return () => {
       observer && observer.disconnect();
     };
@@ -71,7 +91,7 @@ const InfiniteScroll = () => {
             />
           </div>
         )}
-        <div ref={observerRef} className="h-[10px]"></div>
+        <div ref={observerRef} className="h-[50px]"></div>
       </div>
     </>
   );

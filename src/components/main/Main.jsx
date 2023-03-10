@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { __getSchedule } from "../../redux/modules/ScheduleSlice";
-import MainScheduleCards from "./MainScheduleCards";
+//import { __getSchedule } from "../../redux/modules/ScheduleSlice";
+//import MainScheduleCards from "./MainScheduleCards";
 import BottomNavi from "../layout/BottomNavi";
 import desc from "../../img/desc.png";
-import SelectorSort from "../modal/SelectorSort";
-
+//import SelectorSort from "../modal/SelectorSort";
+import InfiniteScroll from "./InfiniteScroll";
 const Main = () => {
   const dispatch = useDispatch();
   const nickName = sessionStorage.getItem("nickname");
   const getRandom = Math.floor(Math.random() * (3 + 0) + 0);
-  const { schedules } = useSelector((state) => state.ScheduleSlice);
+  // const { schedules } = useSelector((state) => state.ScheduleSlice);
   const [sortList, setSortList] = useState("D-Day");
   const [modalOpen, setModalOpen] = useState(false);
   const welcomText = ["환영합니다.", "좋은하루 되세요!", "안녕하세요."];
@@ -21,7 +21,7 @@ const Main = () => {
 
   useEffect(() => {
     const userId = sessionStorage.getItem("userId");
-    dispatch(__getSchedule(userId));
+    // dispatch(__getSchedule(userId));
   }, [dispatch]);
 
   return (
@@ -49,13 +49,13 @@ const Main = () => {
             </div>
           </div>
           <div>
-            {/* <InfiniteScroll /> */}
+            <InfiniteScroll />
             <div className="flex flex-col gap-[30px]  rounded-[10px] ">
-              {schedules?.map((list) => {
+              {/* {schedules?.map((list) => {
                 return (
                   <MainScheduleCards key={list.eventId} schedules={list} />
                 );
-              })}
+              })} */}
             </div>
           </div>
         </div>
