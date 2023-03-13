@@ -1,8 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { instance } from "../../shared/AxiosInstance";
-import axios from "axios";
 import { LoginApi } from "../../api/LoginApi";
-import { setSingup } from "./SingupSlice";
+import { __openModal } from "./SingupSlice";
 
 //이메일 로그인
 
@@ -14,7 +13,7 @@ export const __emailLogin = createAsyncThunk(
         email: payload.email,
         password: payload.password,
       });
-      console.log(data);
+
       const accessToken = data.headers.get("Authorization");
       const { email, nickname, profileImage, userId } = data.data.data;
       sessionStorage.setItem("accessToken", accessToken);
@@ -22,18 +21,26 @@ export const __emailLogin = createAsyncThunk(
       sessionStorage.setItem("email", email);
       sessionStorage.setItem("nickname", nickname);
       sessionStorage.setItem("profileImage", profileImage);
-      alert(`${nickname}님 어서오세요.`);
-      window.location.href = "/main";
+      payload.setModalStr({
+        modalTitle: `${nickname}님 어서오세요.`,
+        modalMessage: `오늘도 그님스와 함께\n행복한 하루 보내세요.`,
+      });
+      payload.dispatch(__openModal(payload.dispatch));
+      // window.location.href = "/main";
     } catch (error) {
-      console.log(error);
       const { data } = error.response;
-      console.log(data);
       if (data.status === 401) {
         payload.setModalStr({
           modalTitle: "ID를 찾을 수 없어요.",
           modalMessage: "이메일와 비밀번호를  \n  다시 한 번 확인해주세요.",
         });
-        payload.onModalOpen();
+        payload.dispatch(__openModal(payload.dispatch));
+      } else {
+        payload.setModalStr({
+          modalTitle: "ID를 찾을 수 없어요.",
+          modalMessage: "이메일와 비밀번호를  \n  다시 한 번 확인해주세요.",
+        });
+        payload.dispatch(__openModal(payload.dispatch));
       }
     }
   }
@@ -45,24 +52,22 @@ export const __kakaologin = createAsyncThunk(
   //전달 받은 코드 비동기로 처리
   async (code, thunkAPI) => {
     try {
-      console.log("페이로드?", code);
       const data = await instance
         .post("social/kakao-login", { code })
         .then((res) => {
-          console.log("서버에서 보내는값?", res.data.data);
           const email = res.data.data.email;
           sessionStorage.setItem("email", email);
           sessionStorage.setItem("socialCode", "KAKAO");
-
           if (res.data.message !== "non-member") {
             const accessToken = res.headers.get("Authorization");
             const nickname = res.data.data.nickname;
             const userId = res.data.data.userId;
-            console.log(nickname);
-            sessionStorage.setItem("token", accessToken);
+            const profileImage = res.data.data.profileImage;
+            sessionStorage.setItem("accessToken", accessToken);
             sessionStorage.setItem("nickname", nickname);
             sessionStorage.setItem("userId", userId);
-
+            sessionStorage.setItem("profileImage", profileImage);
+            sessionStorage.setItem("socialCode", "social");
             alert("그님스에 오신걸 환영합니다");
             return window.location.assign("/main");
 
@@ -72,7 +77,7 @@ export const __kakaologin = createAsyncThunk(
             return window.location.assign("/signup/setProfileName");
           }
         });
-      return thunkAPI.fulfillWithValue(data);
+      // return thunkAPI.fulfillWithValue(data);
     } catch (error) {
       window.location.assign("/");
       return thunkAPI.rejectWithValue(error);
@@ -80,11 +85,74 @@ export const __kakaologin = createAsyncThunk(
   }
 );
 
+export const __sendEmail = createAsyncThunk(
+  "sendEamil",
+  async ({ email, setModalStr }, thunkAPI) => {
+    try {
+      const data = await LoginApi.SendEmailAuthenticationNumber(email);
+      if (data.status === 200) {
+        sessionStorage.setItem("changePasswordEmail", email);
+        setModalStr({
+          modalTitle: "이메일함을 확인해주세요",
+          modalMessage: "인증번호를 입력해주세요",
+        });
+        return thunkAPI.fulfillWithValue(data.data);
+      }
+      return thunkAPI.fulfillWithValue(data.data);
+    } catch (error) {
+      const { data } = error.response;
+      if (data.status === 400) {
+        setModalStr({
+          modalTitle: data.message,
+          modalMessage: "이메일을 확인해주세요.",
+        });
+        return thunkAPI.rejectWithValue(data);
+      }
+      return thunkAPI.rejectWithValue(data);
+    }
+  }
+);
+
+export const __NextPage = createAsyncThunk(
+  "onSubnitNextPage",
+  async ({ dispatch, setModalStr, email, code }, thunkAPI) => {
+    try {
+      dispatch(__openModal(dispatch));
+      const { data } = await LoginApi.SendAuthenticationNumber({ email, code });
+
+      if (data.status === 200) {
+        setModalStr({
+          modalTitle: data.message,
+          modalMessage: "",
+        });
+        sessionStorage.setItem("changePasswordEmail", email);
+        return thunkAPI.fulfillWithValue(data.data);
+      }
+    } catch (error) {
+      const { data } = error.response;
+      if (data.status === 400) {
+        setModalStr(() => ({
+          modalTitle: "인증번호 실패",
+          modalMessage: `인증번호가 잘못 입력되었습니다. \n 인증요청을 재시도 해주세요.`,
+        }));
+        dispatch(__openModal(dispatch));
+        return thunkAPI.rejectWithValue(data);
+      }
+      dispatch(__openModal(dispatch));
+      return thunkAPI.rejectWithValue(data);
+    }
+  }
+);
 const initialState = {
   error: null,
   isLoading: false,
   message: "",
   email: "",
+  emailCheck: false,
+  check: {
+    emailCheck: false,
+    authenticationNumberCheck: false,
+  },
 };
 
 const LoginSlice = createSlice({
@@ -100,23 +168,50 @@ const LoginSlice = createSlice({
     setEmail: (state, action) => {
       state.email = action.payload;
     },
+    resetCheck: (state) => {
+      state.check.emailCheck = false;
+      state.check.authenticationNumberCheck = false;
+    },
   },
   extraReducers: {
     //카카오 소셜로그인
-    [__kakaologin.pending]: (state) => {
+     [__kakaologin.pending]: (state) => {
+       state.isLoading = true;
+     },
+     [__kakaologin.fulfilled]: (state, action) => {
+       state.isLoading = false;
+       state.loginCheck = true;
+       state.email = action.payload;
+    },
+     [__kakaologin.rejected]: (state, action) => {
+       state.isLoading = false;
+       state.error = action.payload;
+     },
+    [__sendEmail.pending]: (state) => {
       state.isLoading = true;
     },
-    [__kakaologin.fulfilled]: (state, action) => {
+    [__sendEmail.fulfilled]: (state, action) => {
       state.isLoading = false;
-      state.loginCheck = true;
-      state.email = action.payload;
+      state.check.emailCheck = true;
     },
-    [__kakaologin.rejected]: (state, action) => {
+    [__sendEmail.rejected]: (state, action) => {
+      state.isLoading = false;
+      state.error = action.payload;
+    },
+    [__NextPage.pending]: (state) => {
+      state.isLoading = true;
+    },
+    [__NextPage.fulfilled]: (state, action) => {
+      state.isLoading = false;
+      state.check.authenticationNumberCheck = true;
+    },
+    [__NextPage.rejected]: (state, action) => {
       state.isLoading = false;
       state.error = action.payload;
     },
   },
 });
 
-export const { isLoading, isLogin, setMessage } = LoginSlice.actions;
+export const { isLoading, isLogin, setMessage, resetCheck } =
+  LoginSlice.actions;
 export default LoginSlice.reducer;

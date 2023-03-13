@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const MainScheduleCards = ({ schedules }) => {
   const navigate = useNavigate();
-  const invitees = schedules.invitees;
+  const location = useLocation().pathname;
 
+  const invitees = schedules.invitees;
   const hourClock = schedules.time.split(":", 2)[0];
   let hour = 0;
   const min = schedules.time.split(":", 2)[1];
@@ -27,9 +28,9 @@ const MainScheduleCards = ({ schedules }) => {
     if (invitees.length > 1) {
       setInviteesList(() => ({
         hidden: false,
-        inviteesList: `${schedules.invitees[0].username} 외 ${
+        inviteesList: `${schedules.invitees[0].username}외 ${
           invitees.length - 1
-        } 명`,
+        }명`,
       }));
     }
   }, [invitees, schedules.invitees]);
@@ -41,7 +42,7 @@ const MainScheduleCards = ({ schedules }) => {
   return (
     <div
       onClick={onDetail}
-      className={`w-[335px] h-[180px] bg-white rounded-[10px]  border border-solid border-[#E8E8E8]  shadow-md`}
+      className={`w-[335px] h-[180px] bg-white rounded-[10px] border border-solid border-[#E8E8E8]  shadow-md  cursor-pointer`}
     >
       <div
         className={`flex items-center  h-[14px] ${bgColor} rounded-t-[10px] `}
@@ -53,7 +54,7 @@ const MainScheduleCards = ({ schedules }) => {
         </ul>
       </div>
 
-      <div className="pt-[20px] pl-[22px] pr-[22px]">
+      <div className=" py-[20px] pl-[22px] pr-[22px]">
         <div className="text-textBlack ">
           <div className="grid grid-flow-row gap-[20px]">
             <div className="flex flex-row h-[21px] gap-[25px] text-[16px] font-[400]">
@@ -66,25 +67,27 @@ const MainScheduleCards = ({ schedules }) => {
                   {time}
                 </div>
               )}
-              <div className="font-[700]">
-                D-
-                {schedules.dday === 0 ? <>DAY</> : <>{schedules.dday}</>}
-              </div>
+              {location !== "/pastEvents" ? (
+                <div className="font-[700]">
+                  D-
+                  {schedules.dday === 0 ? <>DAY</> : <>{schedules.dday}</>}
+                </div>
+              ) : null}
             </div>
 
             <div className="grid grid-flow-row gap-[17px]">
-              <div className="text-[18px] font-[700]">
+              <div className="text-[18px] leading-[21px] tracking-tighter font-[700]">
                 <div>{schedules.subject}</div>
               </div>
 
               <div className="h-[40px]">
-                <div hidden={inviteesList.hidden} className="flex space-x-32">
-                  <div className="flex -space-x-5 overflow-hidden ">
-                    {invitees.map((list, index) => {
+                <div hidden={inviteesList.hidden} className="flex space-x-32 ">
+                  <div className="flex -space-x-8 overflow-hidden ">
+                    {invitees?.map((list, index) => {
                       return (
                         <div
                           key={index}
-                          className="flex  rounded-full border-white border-2"
+                          className="flex border-2 border-white rounded-full"
                         >
                           <img
                             className="inline-block h-[40px] w-[40px] rounded-full"
@@ -102,9 +105,6 @@ const MainScheduleCards = ({ schedules }) => {
               </div>
             </div>
           </div>
-        </div>
-        <div className="flex h-[40px] text-rigth">
-          <div className="items-center text-right w-full rigth-0 "></div>
         </div>
       </div>
     </div>

@@ -3,63 +3,68 @@ import Label from "../layout/Label";
 import LoginSignupInputBox from "../layout/input/LoginSignupInputBox";
 import IsModal from "../modal/Modal";
 import { useRef } from "react";
-import { LoginApi } from "../../api/LoginApi";
 import { useNavigate } from "react-router";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  __sendEmail,
+  __NextPage,
+  resetCheck,
+} from "../../redux/modules/LoginSlice";
+import {
+  __openModal,
+  __closeModal,
+} from "../../redux/modules/SingupSlice";
+import { useEffect } from "react";
 
 const InputEmail = () => {
   const navigator = useNavigate();
+  const dispatch = useDispatch();
+
   const emailRef = useRef();
   const authenticationNumberRef = useRef();
-  const emailRegulationExp =
-    /^[a-zA-Z0-9+-\_.]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/;
+
+  const { isLoading } = useSelector((state) => state.LoginSlice);
 
   const [style, setStyle] = useState({
     bgColorEmail: "bg-inputBox",
-    shadowEmail: "",
     bgColorAuthenticationNumber: "bg-inputBox",
-    shadowAuthenticationNumber: "",
   });
   const [regulation, SetRegulation] = useState({
     emailError: "",
     authenticationNumberError: "",
   });
-  const [isOpen, setOpen] = useState(false);
   const [ModalStr, setModalStr] = useState({
     modalTitle: "",
     modalMessage: "",
   });
-  const [isLoding, setIsLoding] = useState(false);
-  const [InputCheck, setInputCheck] = useState({ input: false, modal: false });
 
-  const onModalOpen = () => {
-    setOpen({ isOpen: true });
-  };
+  const { emailCheck, authenticationNumberCheck } = useSelector(
+    (state) => state.LoginSlice.check
+  );
   const onMoalClose = () => {
-    setOpen({ isOpen: false });
-    if (InputCheck.modal) {
+    dispatch(__closeModal());
+    if (authenticationNumberCheck) {
       navigator("/ChangePassword");
     }
   };
 
   const onInputColor = (event) => {
-    const { id } = event.target;
-    const emailRefCurrent = emailRef.current;
-    const authenticationNumberRefCurrent = authenticationNumberRef.current;
+    const { id, value } = event.target;
+    const emailRegulationExp =
+      /^[a-zA-Z0-9+-\_.]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/;
+
     if (id === "email") {
-      console.log("email입니다");
       setStyle(() => ({
         ...style,
         bgColorEmail: "bg-inputBoxFocus",
-        shadowEmail: "drop-shadow-inputBoxShadow",
       }));
-      if (emailRefCurrent.value.trim() === "") {
+      if (value === "") {
         setStyle(() => ({
           ...style,
           bgColorEmail: "bg-inputBox",
-          shadowEmail: "",
         }));
       }
-      if (emailRegulationExp.test(emailRefCurrent.value)) {
+      if (emailRegulationExp.test(value)) {
         SetRegulation(() => ({
           ...regulation,
           emailError: "",
@@ -69,21 +74,19 @@ const InputEmail = () => {
           ...regulation,
           emailError: "올바른 이메일 형식이 아닙니다.",
         }));
-
-        emailRefCurrent.focus();
+        event.target.focus();
         return;
       }
     } else {
-      setStyle(() => ({
-        ...style,
-        bgColorAuthenticationNumber: "bg-inputBoxFocus",
-        shadowAuthenticationNumber: "drop-shadow-inputBoxShadow",
-      }));
-      if (authenticationNumberRefCurrent.value.trim() === "") {
+      if (value.trim() === "") {
         setStyle(() => ({
           ...style,
           bgColorAuthenticationNumber: "bg-inputBox",
-          shadowAuthenticationNumber: "",
+        }));
+      } else {
+        setStyle(() => ({
+          ...style,
+          bgColorAuthenticationNumber: "bg-inputBoxFocus",
         }));
       }
     }
@@ -105,35 +108,14 @@ const InputEmail = () => {
       }));
     }
 
-    sendEmail({ email: email.value });
-  };
-
-  const sendEmail = async (payload) => {
-    try {
-      setIsLoding(() => true);
-      onModalOpen();
-      const data = await LoginApi.SendEmailAuthenticationNumber(payload);
-      setIsLoding(() => false);
-      console.log(data);
-      if (data.status === 200) {
-        sessionStorage.setItem("changePasswordEmail", payload.email);
-        setModalStr({
-          modalTitle: "이메일함을 확인해주세요",
-          modalMessage: "인증번호를 입력해주세요",
-        });
-        setInputCheck(() => ({ ...InputCheck, input: true }));
-      }
-    } catch (error) {
-      console.log(error.response);
-      const { data } = error.response;
-      if (data.status === 400) {
-        setIsLoding(() => false);
-        setModalStr({
-          modalTitle: data.message,
-          modalMessage: "이메일을 확인해주세요.",
-        });
-      }
-    }
+    dispatch(
+      __sendEmail({
+        email: email.value,
+        dispatch: dispatch,
+        setModalStr: setModalStr,
+      })
+    );
+    dispatch(__openModal(dispatch));
   };
 
   const onSubmitNextPage = () => {
@@ -147,6 +129,9 @@ const InputEmail = () => {
       }));
       email.focus();
       return;
+    } else if (regulation.emailError) {
+      email.focus();
+      return;
     } else {
       SetRegulation(() => ({
         ...regulation,
@@ -154,7 +139,7 @@ const InputEmail = () => {
       }));
     }
 
-    if (authenticationNumber.value.trim() === "") {
+    if (authenticationNumber.value === "") {
       SetRegulation(() => ({
         ...regulation,
         authenticationNumberError: "인증번호를 입력해주세요",
@@ -167,44 +152,32 @@ const InputEmail = () => {
         authenticationNumberError: "",
       }));
     }
-
-    if (InputCheck.input) {
-      onSubmitNextPageAxios({
-        email: email.value,
-        code: authenticationNumber.value,
-      });
+    if (emailCheck && !authenticationNumberCheck) {
+      dispatch(
+        __NextPage({
+          email: email.value,
+          code: authenticationNumber.value,
+          dispatch: dispatch,
+          setModalStr: setModalStr,
+        })
+      );
+    } else if (!emailCheck) {
+      SetRegulation(() => ({
+        ...regulation,
+        emailError: "이메일 중복확인을 해주세요.",
+      }));
+      email.focus();
     }
   };
 
-  const onSubmitNextPageAxios = async (payload) => {
-    try {
-      setIsLoding(() => true);
-      onModalOpen();
-      const { data } = await LoginApi.SendAuthenticationNumber(payload);
-      setIsLoding(() => false);
-      console.log(data);
-      if (data.status === 200) {
-        setModalStr({
-          ...ModalStr,
-          modalTitle: data.message,
-          modalMessage: "",
-        });
-        setInputCheck(() => ({ ...InputCheck, modal: true }));
-      }
-    } catch (error) {
-      console.log(error.response);
-      const { data } = error.response;
-      if (data.status === 400) {
-        setIsLoding(() => false);
-        setModalStr(() => ({
-          ...ModalStr,
-          modalTitle: "인증번호 실패",
-          modalMessage: `인증번호가 잘못 입력되었습니다. \n 인증요청을 재시도 해주세요.`,
-        }));
-      }
+  useEffect(() => {
+    if (sessionStorage.getItem("socialCode")) {
+      navigator(-1);
     }
-  };
-
+    return () => {
+      dispatch(resetCheck());
+    };
+  }, []);
   return (
     <div className="container ">
       <div className=" grid grid-flow-row ml-[20px] mr-[20px] mt-[55px]">
@@ -221,7 +194,7 @@ const InputEmail = () => {
                 onChange={onInputColor}
                 autoComplete="off"
                 placeholder="아이디(이메일) 입니다."
-                className={`w-[234px] px-3 h-[50px] ${style.bgColorEmail} ${style.shadowEmail} placeholder-inputPlaceHoldText`}
+                className={`w-[234px] px-3 h-[50px] ${style.bgColorEmail}  placeholder-inputPlaceHoldText`}
               />
               <div
                 onClick={onSendEmail}
@@ -242,7 +215,6 @@ const InputEmail = () => {
                 placeholder="인증번호 입력"
                 onChange={onInputColor}
                 bgColor={style.bgColorAuthenticationNumber}
-                shadow={style.shadowAuthenticationNumber}
                 ref={authenticationNumberRef}
               />
             </div>
@@ -262,10 +234,9 @@ const InputEmail = () => {
           </div>
         </div>
         <IsModal
-          isModalOpen={isOpen.isOpen}
           onMoalClose={onMoalClose}
           message={{ ModalStr }}
-          isLoding={isLoding}
+          isLoding={isLoading}
         />
       </div>
     </div>

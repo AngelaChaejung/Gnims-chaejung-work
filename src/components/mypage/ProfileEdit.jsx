@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { UserApi } from "../../api/UserApi";
 import inputImgIcon from "../../img/Component01.png";
 import LoadingPage from "../../page/LoadingPage";
+import ProfileEditCompletion from "../modal/ProfileEditCompletion";
 
 const ProfileEdit = () => {
   const navigate = useNavigate();
@@ -10,9 +11,16 @@ const ProfileEdit = () => {
   const profileImage = sessionStorage.getItem("profileImage");
   const [image, setImage] = useState(profileImage);
   const [loading, setLoading] = useState(true);
-  const isImageSelected =
-    imgRef.current && imgRef.current.files && imgRef.current.files.length > 0;
+  const [modalMessage, setModalMessage] = useState("");
+  const isImageSelected = imgRef.current && imgRef.current.files && imgRef.current.files.length > 0;
   const isDisabled = loading || !isImageSelected;
+  let buttonColor;
+  if (isDisabled) {
+    buttonColor = "bg-[#6F6F6F]";
+  } else {
+    buttonColor = "bg-[#002C51]";
+  }
+  const [isModalOpen, setIsModalOpen] = useState(false);
   //이미지 미리보기
   const imagePreview = () => {
     const reader = new FileReader();
@@ -30,11 +38,10 @@ const ProfileEdit = () => {
     const formData = new FormData();
     formData.append("image", null);
     const response = await UserApi.editProfile(formData);
-    console.log(response);
     if (response.status === 200) {
-      alert("프로필이미지가 변경되었습니다!");
+      setModalMessage("기본이미지로 설정되었습니다.");
+      setIsModalOpen(true);
       setLoading(false);
-      navigate("/main");
       sessionStorage.setItem("profileImage", response.data.data.profileImage);
     }
   };
@@ -43,24 +50,23 @@ const ProfileEdit = () => {
     setLoading(true);
     try {
       const imgFile = imgRef.current.files[0];
-      console.log(imgFile);
       const formData = new FormData();
       if (imgFile !== undefined) {
         formData.append("image", imgFile);
       }
 
       const response = await UserApi.editProfile(formData);
-      console.log(response);
       if (response.status === 200) {
-        alert("프로필이미지가 변경되었습니다!");
+        setModalMessage("프로필이미지가 변경되었습니다.");
+        setIsModalOpen(true);
         setLoading(false);
-        navigate("/main");
+
         sessionStorage.setItem("profileImage", response.data.data.profileImage);
       }
       const { imageUrl } = response.data.data.profileImage;
       setImage(imageUrl);
     } catch (error) {
-      console.error(error);
+      // console.error(error);
     }
   };
   useEffect(() => {
@@ -68,9 +74,10 @@ const ProfileEdit = () => {
   }, []);
   return (
     <div>
+      {isModalOpen && <ProfileEditCompletion modalMessage={modalMessage} />}
       {loading && <LoadingPage />}
-      <div className="text-left text-[25px] font-thin mt-[30px] ml-[15px]">
-        현재 설정된 프로필이미지를 <br />
+      <div className="text-left text-[24px] leadding-[32px] font-[400] tracking-tighter mt-[30px] ml-[15px]">
+        현재 설정된 프로필 이미지를 <br />
         변경할 수 있어요.
       </div>
       <div className="grid grid-flow-row ml-[20px] mr-[20px]">
@@ -84,16 +91,12 @@ const ProfileEdit = () => {
           <div className="mt-[53px]">
             <div className="mt-[75px] mb-[125px] relative">
               <div className="h-[100px] w-[100px] justify-center mx-auto">
-                <img
-                  className="w-full h-full rounded-full drop-shadow-lg"
-                  src={image}
-                  alt="프로필이미지"
-                />
+                <img className="w-full h-full rounded-full drop-shadow-lg" src={image} alt="프로필이미지" />
               </div>
               <div className="h-[40px] w-[40px] justify-center mx-auto absolute right-0 left-14 bottom-0 ">
                 <label htmlFor="profileImg">
                   <img
-                    className="w-full cursor-pointer h-full rounded-full drop-shadow-lg"
+                    className="w-full h-full rounded-full cursor-pointer drop-shadow-lg"
                     src={inputImgIcon}
                     alt="프로필이미지수정아이콘"
                   />
@@ -116,14 +119,14 @@ const ProfileEdit = () => {
           </div>
           <div className="flex row">
             <button
-              className="h-[50px] rounded w-1/2 bg-[#002C51] font-[700] text-[#ffff] mt-[24px]"
+              className={`h-[50px] rounded w-1/2 ${buttonColor} font-[700] text-[#ffff] mt-[24px]`}
               onClick={editHandler}
               disabled={isDisabled}
             >
               수정 완료
             </button>
             <button
-              className="h-[50px] rounded w-1/2 ml-[15px] bg-[#6F6F6F] font-[700] text-[#ffff] mt-[24px]"
+              className="h-[50px] rounded w-1/2 ml-[15px] bg-[#002C51] font-[700] text-[#ffff] mt-[24px]"
               onClick={imgResetHandle}
             >
               기본 이미지로 변경

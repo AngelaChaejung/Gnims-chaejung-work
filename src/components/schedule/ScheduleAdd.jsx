@@ -3,12 +3,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
-import {
-  scheduleReset,
-  __postSchedule,
-  __editSchedule,
-  __getScheduleDetail,
-} from "../../redux/modules/ScheduleSlice";
+import { scheduleReset, __postSchedule, __editSchedule, __getScheduleDetail } from "../../redux/modules/ScheduleSlice";
 import FollowingModal from "../modal/FollowingModal";
 import ScheduleAddModal from "../modal/ScheduleAddModal";
 import ScheduleModal from "../modal/ScheduleModal";
@@ -26,33 +21,28 @@ const ScheduleAdd = () => {
     } else {
       dispatch(scheduleReset());
     }
+    return () => {
+      sessionStorage.removeItem("selectedJoiner");
+      sessionStorage.removeItem("selectedJoinerNames");
+    };
   }, []);
 
   //전역으로 받아오는 state
   const oldSchedule = useSelector((state) => state.ScheduleSlice.oldschedules);
-  console.log("수정할 스케줄", oldSchedule);
 
   //필요한 변수들
   //날짜
   const [selectedDate, setSelectedDate] = useState(
-    state.type === "edit"
-      ? new Date(oldSchedule.date + "T" + oldSchedule.time)
-      : ""
+    state.type === "edit" ? new Date(oldSchedule.date + "T" + oldSchedule.time) : ""
   );
 
-  const [selectedColor, setColorSelected] = useState(
-    state.type === "edit" ? oldSchedule.cardColor : "sora"
-  );
+  const [selectedColor, setColorSelected] = useState(state.type === "edit" ? oldSchedule.cardColor : "sora");
 
   //제목
-  const [subject, setSubject] = useState(
-    state.type === "edit" ? oldSchedule.subject : ""
-  );
+  const [subject, setSubject] = useState(state.type === "edit" ? oldSchedule.subject : "");
 
   //내용
-  const [content, setContent] = useState(
-    state.type === "edit" ? oldSchedule.content : ""
-  );
+  const [content, setContent] = useState(state.type === "edit" ? oldSchedule.content : "");
 
   const [borderSora, setBorderSora] = useState(
     state.type !== "edit"
@@ -62,18 +52,10 @@ const ScheduleAdd = () => {
       : "border-none"
   );
   const [borderPink, setBorderPink] = useState(
-    state.type !== "edit"
-      ? "border-none"
-      : oldSchedule.cardColor === "pink"
-      ? "border-blackBorder"
-      : "border-none"
+    state.type !== "edit" ? "border-none" : oldSchedule.cardColor === "pink" ? "border-blackBorder" : "border-none"
   );
   const [borderGreen, setBorderGreen] = useState(
-    state.type !== "edit"
-      ? "border-none"
-      : oldSchedule.cardColor === "green"
-      ? "border-blackBorder"
-      : "border-none"
+    state.type !== "edit" ? "border-none" : oldSchedule.cardColor === "green" ? "border-blackBorder" : "border-none"
   );
 
   //완료모달&경고모달
@@ -108,21 +90,14 @@ const ScheduleAdd = () => {
   };
   //참여자 선택
 
-  const joinerArray =
-    sessionStorage.getItem("selectedJoiner") &&
-    sessionStorage.getItem("selectedJoiner").split(",");
+  const joinerArray = sessionStorage.getItem("selectedJoiner") && sessionStorage.getItem("selectedJoiner").split(",");
   const participants = [];
   participants.push(joinerArray);
   let joinerWithoutDuplicate = [...new Set(joinerArray)];
 
   //time값 구하는 작업
-  const time =
-    selectedDate && selectedDate.toString().split(" ")[4].slice(0, 5);
-  const date = new Date(+selectedDate + 3240 * 10000)
-    .toISOString()
-    .replace("T", " ")
-    .replace(/\..*/, "")
-    .split(" ")[0];
+  const time = selectedDate && selectedDate.toString().split(" ")[4].slice(0, 5);
+  const date = new Date(+selectedDate + 3240 * 10000).toISOString().replace("T", " ").replace(/\..*/, "").split(" ")[0];
   const selectedJoinersName = sessionStorage.getItem("selectedJoinerNames");
   //전체내용을 서버로 보내는 부분.
   const scheduleAddHandler = (e) => {
@@ -157,8 +132,7 @@ const ScheduleAdd = () => {
       setCompleteModal(true);
       sessionStorage.removeItem("selectedJoiner");
       sessionStorage.removeItem("selectedJoinerNames");
-      console.log("생성된 스케쥴:", newSchedule);
-      setTimeout(() => navigate("/main"), 1000);
+      // setTimeout(() => navigate("/main"), 1000);
     } else {
       setModalOpen(true);
     }
@@ -168,13 +142,9 @@ const ScheduleAdd = () => {
   return (
     <>
       <div className="w-[375px]">
-        {followingListOpen && (
-          <FollowingModal setFollowingListOpen={setFollowingListOpen} />
-        )}
+        {followingListOpen && <FollowingModal setFollowingListOpen={setFollowingListOpen} />}
         {modalOpen && <ScheduleModal setModalOpen={setModalOpen} />}
-        {completeModal && (
-          <ScheduleAddModal state={state} setCompleteModal={setCompleteModal} />
-        )}
+        {completeModal && <ScheduleAddModal state={state} />}
         <div className="text-[#121213] ">
           <div className={"bg-[#F8FCFF] flex p-[20px] text-base"}>
             <form>
@@ -214,7 +184,7 @@ const ScheduleAdd = () => {
                 />
               </div>
               {/* 참여자 input을 클릭시 친구 리스트가 */}
-              <div className="flex cursor-pointer flex-col mt-6 font-semibold">
+              <div className="flex flex-col mt-6 font-semibold cursor-pointer">
                 참여자
                 <div
                   onClick={() => {
@@ -227,17 +197,11 @@ const ScheduleAdd = () => {
                   disabled={state.type === "edit"}
                 >
                   {state.type === "edit" ? (
-                    <div className="text-placeHolder">
-                      수정중에는 참여자를 변경 할 수 없습니다.
-                    </div>
+                    <div className="text-placeHolder">수정중에는 참여자를 변경 할 수 없습니다.</div>
                   ) : joinerWithoutDuplicate.length > 0 ? (
-                    <div className=" text-placeHolder">
-                      {selectedJoinersName}
-                    </div>
+                    <div className=" text-placeHolder">{selectedJoinersName}</div>
                   ) : (
-                    <div className=" text-placeHolder">
-                      함께할 친구들을 선택해주세요.(최대 5명)
-                    </div>
+                    <div className=" text-placeHolder">함께할 친구들을 선택해주세요.(최대 5명)</div>
                   )}
                 </div>
               </div>

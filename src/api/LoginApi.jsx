@@ -7,12 +7,11 @@ export const LoginApi = {
   },
 
   KakaoLogin: async (payload) => {
-    console.log("카카오 페이로드", payload);
     return await instance.post("kakao/login", payload);
   },
 
   SendEmailAuthenticationNumber: async (payload) => {
-    return await instance.post("/auth/password", payload);
+    return await instance.post("/auth/password", { email: payload });
   },
 
   SendAuthenticationNumber: async (payload) => {

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import searchIcon from "../../img/searchIcon.png";
+import searchIcon from "../../img/searchIcon.svg";
 import { debounce } from "lodash";
 import { UserApi } from "../../api/UserApi";
 import SearchCards from "./SearchCards";
@@ -14,26 +14,23 @@ const UserSearch = () => {
   const onUserSearch = (event) => {
     setLoading(true);
     const { value } = event.target;
-    console.log("test");
     Settime(() => 1000);
-    handlePrice(value);
+    handleSearch(value);
   };
 
-  const handlePrice = debounce(async (payload) => {
+  const handleSearch = debounce(async (payload) => {
     try {
-      console.log(payload);
       const response = await UserApi.userSearch(payload);
       const userInfo = response.data;
-      console.log(userInfo);
       setUser(() => userInfo);
       setLoading(false);
     } catch (e) {
-      console.log("api 호출 실패");
+      // console.log("api 호출 실패");
     }
   }, time);
 
   useEffect(() => {
-    handlePrice();
+    handleSearch();
   }, []);
 
   return (
@@ -51,14 +48,10 @@ const UserSearch = () => {
             className=" cursor-pointer"
             onClick={() => {
               Settime(() => 0);
-              handlePrice(userSearchName.current.value);
+              handleSearch(userSearchName.current.value);
             }}
           >
-            <img
-              className="absolute top-[15px] right-[40px]"
-              src={searchIcon}
-              alt="돋보기 아이콘"
-            />
+            <img className="absolute top-[15px] right-[15px]" src={searchIcon} alt="돋보기 아이콘" />
           </div>
         </div>
         <div className="px-[20px]">

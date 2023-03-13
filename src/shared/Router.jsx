@@ -25,18 +25,12 @@ import {
   SignupPage,
   LoginPage,
   DevelopIng,
+  Page404,
+  Page500,
 } from "../page/index";
 
 const Router = () => {
-  const [userId, setUserId] = useState(null);
-  console.log(userId);
-  console.log(userId ? "참" : "거짓");
-
-  useEffect(() => {
-    const getUserId = sessionStorage.getItem("userId");
-    setUserId(() => getUserId);
-    console.log(userId);
-  }, [userId]);
+  const userId = useState(sessionStorage.getItem("userId"));
 
   return (
     <Layout>
@@ -96,10 +90,7 @@ const Router = () => {
         <Route path="/signup/setProfileImg" element={<SetProfileImgPage />} />
 
         {/* 로그인 */}
-        <Route
-          path="/login"
-          element={userId ? <Navigate replace to="/main" /> : <LoginPage />}
-        />
+        <Route path="/login" element={<LoginPage />} />
         <Route path="/kakaoLogin" element={<KakaoLogin />} />
         <Route path="auth/kakao/callback" element={<KakaoLoginLoding />} />
         <Route path="/naver/login" element={<NaverLoginPage />} />
@@ -153,6 +144,8 @@ const Router = () => {
 
         {/* 개발중 */}
         <Route path="/developing" element={<DevelopIng />} />
+        <Route path="/404error" element={<Page404 />} />
+        <Route path="/500error" element={<Page500 />} />
       </Routes>
     </Layout>
   );

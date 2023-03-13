@@ -24,8 +24,7 @@ const KebabModal = ({ setModalOpen, id }) => {
 
   const confirmDeleteHandler = () => {
     //DELETE 기능넣으면 됨
-    dispatch(__deleteSchedule([id, userId, dispatch]));
-    console.log(id);
+    dispatch(__deleteSchedule({ id, userId, dispatch }));
     navigate("/main");
   };
 
@@ -35,7 +34,7 @@ const KebabModal = ({ setModalOpen, id }) => {
       <div className="h-full w-[375px] bg-black bg-opacity-50  justify-center fixed bottom-0 z-10 flex">
         {deleteModalOpen ? (
           // <DeleteScheduleModal/>
-          <div className="text-black pt-8 items-center w-[300px] h-[167px] text-center rounded-[16px] mt-[230px] z-20 bg-white ">
+          <div className="text-black pt-8 items-center w-[300px] h-[167px] text-center rounded-[16px] fixed top-[38%] z-20 bg-white ">
             <div className="text-[18px] font-bold flex flex-col ">
               해당 일정을 삭제하시겠습니까?{" "}
             </div>

@@ -7,8 +7,9 @@ import Label from "../layout/Label";
 import LoginSignupInputBox from "../layout/input/LoginSignupInputBox";
 import {
   __nickNameCheck,
-  userInfoState,
   setSingup,
+  __openModal,
+  __closeModal,
 } from "../../redux/modules/SingupSlice";
 
 const Signup = () => {
@@ -21,13 +22,8 @@ const Signup = () => {
     bgColorNickname: "bg-inputBox",
     bgColorPassword: "bg-inputBox",
     bgColorPasswordCheck: "bg-inputBox",
-    shadowName: "",
-    shadowEmail: "",
-    shadowNickname: "",
-    shadowPassword: "",
-    shadowPasswordCheck: "",
   });
-  const [isOpen, setOpen] = useState(false);
+
   const [ModalStr, setModalStr] = useState({
     modalTitle: "",
     modalMessage: "",
@@ -41,13 +37,6 @@ const Signup = () => {
   const userPasswordRef = useRef();
   const PasswordCheckRef = useRef();
 
-  //이름, 이메일, 비밀번호, 닉네임 정규 표현식
-  const nameRegulationExp = /^[ㄱ-ㅎ|가-힣|a-z|A-Z|]+$/;
-  const emailRegulationExp =
-    /^[a-zA-Z0-9+-\_.]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/;
-  const passwordRegulationExp = /^(?=.*[a-zA-Z])(?=.*\d)[a-zA-Z\d]{8,16}$/;
-  const nickNameReglationExp = /^(?=.*[a-z0-9가-힣])[a-z0-9가-힣]{2,8}$/;
-
   //아이디 비밀번호가 틀렸을시 문구
   const [regulation, SetRegulation] = useState({
     regulationName: "",
@@ -57,24 +46,24 @@ const Signup = () => {
     regulationNickName: "",
   });
 
+  const { nickNameDoubleCheck } = useSelector((state) => state.SingupSlice);
+
   //중복확인여부
   const [doubleCheck, setDoubleCheck] = useState({
-    emailDoubleCheck: false,
     passwordDoubleCheck: false,
-    nickNameDoubleCheck: false,
+    emailDoubleCheck: false,
   });
   //모달창
-  const onModalOpen = () => {
-    setOpen({ isOpen: true });
-  };
+
   const onMoalClose = () => {
-    setOpen({ isOpen: false });
+    dispatch(__closeModal());
   };
 
   //=============== 항목별 유효성검사===================
 
   //이름
   const nameValidationTest = (nameValidation) => {
+    const nameRegulationExp = /^[a-zA-Z가-힣]{1,12}$/;
     if (!nameRegulationExp.test(nameValidation.value)) {
       SetRegulation(() => ({
         ...regulation,
@@ -93,6 +82,8 @@ const Signup = () => {
 
   //이메일
   const emailValidationTest = (emailValidation) => {
+    const emailRegulationExp =
+      /^[A-Za-z0-9_\.\-]+@[A-Za-z0-9\-]+\.[A-Za-z0-9\-]+/;
     if (emailRegulationExp.test(emailValidation.value)) {
       SetRegulation(() => ({
         ...regulation,
@@ -111,6 +102,7 @@ const Signup = () => {
 
   //닉네임
   const nickNameValidationTest = (nickNameValidation) => {
+    const nickNameReglationExp = /^[a-zA-Z0-9가-힣]{2,8}$/;
     if (nickNameReglationExp.test(nickNameValidation.value)) {
       SetRegulation(() => ({
         ...regulation,
@@ -129,6 +121,7 @@ const Signup = () => {
 
   //비밀번호
   const passwordValidationTest = (passwordValidation) => {
+    const passwordRegulationExp = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,16}$/;
     if (passwordRegulationExp.test(passwordValidation.value)) {
       SetRegulation(() => ({
         ...regulation,
@@ -137,8 +130,7 @@ const Signup = () => {
     } else {
       SetRegulation(() => ({
         ...regulation,
-        regulationPassword:
-          "최소 8 자리에서 영대소문자와 숫자를 포함시켜주세요.",
+        regulationPassword: "최소 8 자리에서 영문자와 숫자를 포함시켜주세요.",
       }));
 
       passwordValidation.focus();
@@ -181,22 +173,29 @@ const Signup = () => {
           modalTitle: response.message,
           modalMessage: "",
         });
-        onModalOpen();
+        dispatch(__openModal());
       })
       .catch((error) => {
         const { data } = error.response;
+
+    
         if (data.status === 400) {
-          setModalStr({
-            modalTitle: data.message,
-            modalMessage: "이메일을 확인해주세요.",
-          });
-          setDoubleCheck(() => ({
-            ...doubleCheck,
-            emailDoubleCheck: false,
-          }));
-          onModalOpen();
+          if (Array.isArray(data.messages)) {
+          
+            setModalStr({
+              modalTitle: "이메일을 확인해주세요.",
+              modalMessage: data.messages[0],
+            });
+          } else {
+            setModalStr({
+              modalTitle: data.message,
+              modalMessage: "이메일을 확인해주세요.",
+            });
+          }
+
+          dispatch(__openModal());
         } else {
-          console.log(error);
+          // console.log(error);
         }
       });
   };
@@ -247,7 +246,7 @@ const Signup = () => {
 
       nickNameCurrent.focus();
       return;
-    } else if (!doubleCheck.nickNameDoubleCheck) {
+    } else if (!nickNameDoubleCheck) {
       SetRegulation(() => ({
         ...regulation,
         regulationNickName: "",
@@ -261,7 +260,6 @@ const Signup = () => {
     dispatch(
       __nickNameCheck({
         nickname: nickNameCurrent.value,
-        onModalOpen,
         setModalStr,
         doubleCheck,
         setDoubleCheck,
@@ -290,72 +288,67 @@ const Signup = () => {
     const passwordCheckValue = userPasswordCheckCurrnet.value;
 
     if (id === "userName") {
-      setStyle(() => ({
-        ...style,
-        bgColorName: "bg-inputBoxFocus",
-        shadowName: "drop-shadow-inputBoxShadow",
-      }));
       if (nameValue.trim() === "") {
         setStyle(() => ({
           ...style,
           bgColorName: "bg-inputBox",
-          shadowName: "",
+        }));
+      } else {
+        setStyle(() => ({
+          ...style,
+          bgColorName: "bg-inputBoxFocus",
         }));
       }
       nameValidationTest(userNameCurrent);
     } else if (id === "userEmail") {
-      setStyle(() => ({
-        ...style,
-        bgColorEmail: "bg-inputBoxFocus",
-        shadowEmail: "drop-shadow-inputBoxShadow",
-      }));
       if (emailValue.trim() === "") {
         setStyle(() => ({
           ...style,
           bgColorEmail: "bg-inputBox",
-          shadowEmail: "",
+        }));
+      } else {
+        setStyle(() => ({
+          ...style,
+          bgColorEmail: "bg-inputBoxFocus",
         }));
       }
       emailValidationTest(userEmailCurrent);
     } else if (id === "userNickName") {
-      setStyle(() => ({
-        ...style,
-        bgColorNickname: "bg-inputBoxFocus",
-        shadowNickname: "drop-shadow-inputBoxShadow",
-      }));
       if (nickNameValue.trim() === "") {
         setStyle(() => ({
           ...style,
           bgColorNickname: "bg-inputBox",
-          shadowNickname: "",
+        }));
+      } else {
+        setStyle(() => ({
+          ...style,
+          bgColorNickname: "bg-inputBoxFocus",
         }));
       }
       nickNameValidationTest(userNickNameCurrent);
     } else if (id === "userPassword") {
-      setStyle(() => ({
-        ...style,
-        bgColorPassword: "bg-inputBoxFocus",
-        shadowPassword: "drop-shadow-inputBoxShadow",
-      }));
       if (passwordValue.trim() === "") {
         setStyle(() => ({
           ...style,
           bgColorPassword: "bg-inputBox",
-          shadowPassword: "",
+        }));
+      } else {
+        setStyle(() => ({
+          ...style,
+          bgColorPassword: "bg-inputBoxFocus",
         }));
       }
       passwordValidationTest(userPasswordCurrent);
     } else if (id === "passwordCheck") {
-      setStyle(() => ({
-        ...style,
-        bgColorPasswordCheck: "bg-inputBoxFocus",
-        shadowPasswordCheck: "drop-shadow-inputBoxShadow",
-      }));
       if (passwordCheckValue.trim() === "") {
         setStyle(() => ({
           ...style,
           bgColorPasswordCheck: "bg-inputBox",
-          shadowPasswordCheck: "",
+        }));
+      } else {
+        setStyle(() => ({
+          ...style,
+          bgColorPasswordCheck: "bg-inputBoxFocus",
         }));
       }
       passwordCheckValidationTest(userPasswordCheckCurrnet);
@@ -425,7 +418,7 @@ const Signup = () => {
       return;
     } else {
       nickNameValidationTest(userNickNameCurrent);
-      if (!doubleCheck.nickNameDoubleCheck) {
+      if (!nickNameDoubleCheck) {
         SetRegulation(() => ({
           ...regulation,
           regulationNickName: "닉네임 중복확인 해주세요.",
@@ -494,7 +487,7 @@ const Signup = () => {
     <>
       <div className="container">
         <div className=" grid grid-flow-row ml-[20px] mr-[20px] gap-[32px]">
-          <div className=" grid grid-flow-row gap-[10px] mt-[106px]">
+          <div className=" grid grid-flow-row gap-[10px] mt-[30px]">
             <div>
               <h1 className="font-[700] text-textBlack text-[32px] mb-[10px]">
                 Welcome Gnims!
@@ -502,7 +495,7 @@ const Signup = () => {
             </div>
             <div className="font-[500] text-textBlack text-[24px] ">
               <p className="mb-[15px]">일정관리, 공유의 샛별</p>
-              <p>그님스는 여러분을 환영해요!</p>
+              <p className=" leading-[23px]">그님스는 여러분을 환영해요!</p>
             </div>
           </div>
           <form className="">
@@ -516,7 +509,7 @@ const Signup = () => {
                   onChange={onValidity}
                   placeholder="사용자의 이름을 입력해주세요."
                   bgColor={style.bgColorName}
-                  shadow={style.shadowName}
+                  maxLength={11}
                 />
                 <div className="flex items-center h-[40px]">
                   <p className=" w-full font-[500] text-[16px]  text-[#DE0D0D] flex items-center">
@@ -534,12 +527,13 @@ const Signup = () => {
                     placeholder="아이디로 사용할 이메일을 입력해주세요."
                     onChange={onValidity}
                     disabled={doubleCheck.emailDoubleCheck}
-                    className={`${style.bgColorEmail} ${style.shadowEmail} w-full px-1 h-[50px] text-[16px]  placeholder-inputPlaceHoldText`}
+                    className={`${style.bgColorEmail} w-full px-1 h-[50px] text-[16px]  placeholder-inputPlaceHoldText`}
                     autoComplete="off"
                   ></input>
                   <button
                     className="absolute right-[5px] mt-[18px] font-[600] text-textBlack text-[16px]"
                     onClick={onEmailDoubleCheck}
+                    disabled={doubleCheck.emailDoubleCheck}
                   >
                     중복 확인
                   </button>
@@ -558,13 +552,15 @@ const Signup = () => {
                     ref={userNickNameRef}
                     placeholder="2~8자리 숫자,한글,영문을 입력해주세요."
                     onChange={onValidity}
-                    className={`${style.bgColorNickname} ${style.shadowNickname} w-full px-1 h-[50px] text-[16px]  placeholder-inputPlaceHoldText`}
-                    disabled={doubleCheck.nickNameDoubleCheck}
+                    className={`${style.bgColorNickname} w-full px-1 h-[50px] text-[16px]  placeholder-inputPlaceHoldText`}
+                    disabled={nickNameDoubleCheck}
+                    maxLength={8}
                     autoComplete="off"
                   ></input>
                   <button
                     className="absolute right-[5px] mt-[18px] font-[600] text-textBlack text-[16px]"
                     onClick={onNickNameCheck}
+                    disabled={nickNameDoubleCheck}
                   >
                     중복 확인
                   </button>
@@ -585,7 +581,7 @@ const Signup = () => {
                     placeholder="8~16자리 영문 대소문자, 숫자 조합"
                     onChange={onValidity}
                     bgColor={style.bgColorPassword}
-                    shadow={style.shadowPassword}
+                    maxLength={16}
                   />
                 </div>
                 <div className="flex items-center h-[40px]">
@@ -604,7 +600,7 @@ const Signup = () => {
                     onChange={onValidity}
                     ref={PasswordCheckRef}
                     bgColor={style.bgColorPasswordCheck}
-                    shadow={style.shadowPasswordCheck}
+                    maxLength={16}
                   />
                 </div>
                 <div className="flex items-center h-[40px]">
@@ -619,15 +615,11 @@ const Signup = () => {
                 onClick={onSubmit}
                 className="h-[50px] rounded w-full bg-[#002C51] font-[700] text-[#ffff] mt-[24px] mb-[69px]"
               >
-                회원가입 완료
+                다음
               </button>
             </div>
           </form>
-          <IsModal
-            isModalOpen={isOpen.isOpen}
-            onMoalClose={onMoalClose}
-            message={{ ModalStr }}
-          />
+          <IsModal onMoalClose={onMoalClose} message={{ ModalStr }} />
         </div>
       </div>
     </>

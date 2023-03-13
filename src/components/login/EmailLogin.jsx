@@ -3,20 +3,19 @@ import { useNavigate } from "react-router-dom";
 import IsModal from "../modal/Modal";
 import kakaologo from "../../img/kakao_login_medium_narrow.png";
 import { KAKAO_AUTH_URL } from "../../shared/OAuth";
-import LoginButton from "../button/LoginButton";
+import KakaoLogin from "./KakaoLogin";
 import "../style/login.css";
 import { __emailLogin } from "../../redux/modules/LoginSlice";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import NaverLogin from "../../page/NaverLoginPage";
 import Label from "../layout/Label";
 import LoginSignupInputBox from "../layout/input/LoginSignupInputBox";
 import gnimsLogo from "../../img/gnimslogo1.png";
-import { EventSourcePolyfill } from "event-source-polyfill";
+import { __closeModal } from "../../redux/modules/SingupSlice";
 
 const EmailLogin = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [isOpen, setOpen] = useState(false);
   const [ModalStr, setModalStr] = useState({
     modalTitle: "",
     modalMessage: "",
@@ -24,8 +23,6 @@ const EmailLogin = () => {
   const [style, setStyle] = useState({
     bgColorEmail: "bg-inputBox",
     bgColorPassword: "bg-inputBox",
-    shadowEmail: "",
-    shadowPassword: "",
   });
 
   //서버에 전달하기 위한 input Ref 생성
@@ -41,7 +38,7 @@ const EmailLogin = () => {
   //이메일, 비밀번호 정규 표현식
   const emailRegulationExp =
     /^[a-zA-Z0-9+-\_.]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/;
-  const passwordRegulationExp = /^(?=.*[a-zA-Z])(?=.*\d)[a-zA-Z\d]{8,16}$/;
+  const passwordRegulationExp = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,16}$/;
 
   //유효성검사
   const onValidity = (event) => {
@@ -50,13 +47,11 @@ const EmailLogin = () => {
       setStyle(() => ({
         ...style,
         bgColorEmail: "bg-inputBoxFocus",
-        shadowEmail: "drop-shadow-inputBoxShadow",
       }));
       if (value.trim() === "") {
         setStyle(() => ({
           ...style,
           bgColorEmail: "bg-inputBox",
-          shadowEmail: "",
         }));
       }
       if (!emailRegulationExp.test(value)) {
@@ -68,13 +63,11 @@ const EmailLogin = () => {
       setStyle(() => ({
         ...style,
         bgColorPassword: "bg-inputBoxFocus",
-        shadowPassword: "drop-shadow-inputBoxShadow",
       }));
       if (value.trim() === "") {
         setStyle(() => ({
           ...style,
           bgColorPassword: "bg-inputBox",
-          shadowPassword: "",
         }));
       }
       if (!passwordRegulationExp.test(value)) {
@@ -84,11 +77,12 @@ const EmailLogin = () => {
   };
 
   //모달창
-  const onModalOpen = () => {
-    setOpen({ isOpen: true });
-  };
+
   const onMoalClose = () => {
-    setOpen({ isOpen: false });
+    dispatch(__closeModal());
+    if (sessionStorage.getItem("userId")) {
+      navigate("/main");
+    }
   };
 
   //서버에 전달
@@ -124,12 +118,11 @@ const EmailLogin = () => {
       __emailLogin({
         email: emailValue,
         password: passwordValue,
+        dispatch,
         navigate,
-        onModalOpen,
         setModalStr,
       })
     );
-    onSubmit();
   };
 
   //카카오 로그인
@@ -138,11 +131,11 @@ const EmailLogin = () => {
   };
 
   return (
-    <div className="container h-full md ">
+    <div className="container h-full">
       <div className="ml-[20px] mr-[20px] ">
-        <div className="grid grid-rows mt-[100px]">
+        <div className="grid grid-rows pt-[100px]">
           <div className="h-[150px]">
-            <div className="mx-auto  w-[150px] h-[64px] overflow-hidden gap-[10px] ">
+            <div className="mx-auto w-[150px] h-[64px] overflow-hidden gap-[10px] ">
               <img
                 src={gnimsLogo}
                 alt="곰캐릭터가 우쭐거리며 왠지 잘될 것 같은 기분포즈 중"
@@ -153,7 +146,7 @@ const EmailLogin = () => {
           <form className="mt-[-40px]">
             <div className=" grid grid-row-3 gap-[10px]">
               <div className="">
-                <div className="grid  grid-row-2">
+                <div className="grid grid-row-2">
                   <Label htmlFor="userEmail">이메일</Label>
                   <LoginSignupInputBox
                     type="email"
@@ -185,6 +178,7 @@ const EmailLogin = () => {
                     placeholder="비밀번호 입력"
                     shadow={style.shadowPassword}
                     bgColor={style.bgColorPassword}
+                    maxLength={16}
                   />
                 </div>
                 <div className="flex items-center ">
@@ -192,11 +186,10 @@ const EmailLogin = () => {
                     className="h-[40px] w-full font-[500] text-[16px] text-[#DE0D0D] flex items-center"
                     hidden={regulation.regulationPassword}
                   >
-                    8글자이상 입력 해주세요.
+                    8글자이상 영문숫자 조합으로 입려해주세요.
                   </p>
                 </div>
               </div>
-
               <button
                 onClick={onSubmit}
                 className="h-[50px] rounded w-full bg-[#002C51] font-[700] text-[#ffff] mt-[24px]"
@@ -205,18 +198,18 @@ const EmailLogin = () => {
               </button>
             </div>
           </form>
-          <div className="mt-[26px] grid grid-cols-2 text-center">
-            <div className="border-4 border-indigo-600">
+          <div className="my-[40px] flex text-center">
+            <div className="border-black border-solid border-r-[1px]">
               <button
-                className="text-textBlack text-[16px] font-[400] px-[30px] py-[10px]"
-                onClick={() => navigate("/developing")}
+                className="text-textBlack text-[16px] font-[400] px-[30px] pr-[37px]"
+                onClick={() => navigate("/login/auth/InputEmail")}
               >
                 비밀번호 재설정
               </button>
             </div>
-            <div>
+            <div className="pl-[15px]">
               <button
-                className="text-textBlack text-[16px] font-[400] px-[30px] py-[10px] "
+                className="text-textBlack text-[16px] font-[400] px-[30px] pl-[40px] "
                 onClick={() => navigate(`/signup`)}
               >
                 회원가입
@@ -234,21 +227,16 @@ const EmailLogin = () => {
               </p>
             </div>
             <div className="text-center">
-              <LoginButton onEvent={onClickKakaoLongin} img={kakaologo} />
+              <KakaoLogin onEvent={onClickKakaoLongin} img={kakaologo} />
               <p className="mt-[20px] text-[#12396F] font-[400] text-[14px]">
                 카카오
               </p>
             </div>
           </div>
-          <IsModal
-            isModalOpen={isOpen.isOpen}
-            onMoalClose={onMoalClose}
-            message={{ ModalStr }}
-          />
+          <IsModal onMoalClose={onMoalClose} message={{ ModalStr }} />
         </div>
       </div>
     </div>
   );
 };
-
 export default EmailLogin;

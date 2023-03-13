@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { __nickNameCheck } from "../../redux/modules/SingupSlice";
+import { __closeModal, __nickNameCheck } from "../../redux/modules/SingupSlice";
 import Label from "../layout/Label";
 import LoginSignupInputBox from "../layout/input/LoginSignupInputBox";
 import IsModal from "../modal/Modal";
@@ -9,22 +9,18 @@ import IsModal from "../modal/Modal";
 const SetProfileName = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [isOpen, setOpen] = useState(false);
   const [ModalStr, setModalStr] = useState({
     modalTitle: "",
     modalMessage: "",
   });
   const userNameRef = useRef();
   const userNickNameRef = useRef();
-  const [doubleCheck, setDoubleCheck] = useState({
-    nickNameDoubleCheck: false,
-  });
+
+  const { nickNameDoubleCheck } = useSelector((state) => state.SingupSlice);
 
   const [style, setStyle] = useState({
     bgColorName: "bg-inputBox",
     bgColorNickname: "bg-inputBox",
-    shadowName: "",
-    shadowNickname: "",
   });
 
   useEffect(() => {
@@ -34,10 +30,10 @@ const SetProfileName = () => {
     ) {
       navigate("/signup/setProfileImg");
     }
-  }, [dispatch, doubleCheck, navigate]);
+  }, [dispatch, navigate]);
 
-  const nameRegulationExp = /^[ㄱ-ㅎ|가-힣|a-z|A-Z|]+$/;
-  const nickNameReglationExp = /^(?=.*[a-z0-9가-힣])[a-z0-9가-힣]{2,8}$/;
+  const nameRegulationExp = /^[a-zA-Z가-힣]{1,12}$/;
+  const nickNameReglationExp = /^[a-zA-Z0-9가-힣]{2,8}$/;
 
   //아이디 비밀번호가 틀렸을시 문구
   const [regulation, SetRegulation] = useState({
@@ -52,12 +48,10 @@ const SetProfileName = () => {
       setStyle(() => ({
         ...style,
         bgColorName: "bg-inputBoxFocus",
-        shadowName: "drop-shadow-inputBoxShadow",
       }));
       if (value.trim() === "") {
         setStyle(() => ({
           bgColorName: "bg-inputBox",
-          shadowName: "",
         }));
       }
       if (!nameRegulationExp.test(value)) {
@@ -75,13 +69,11 @@ const SetProfileName = () => {
       setStyle(() => ({
         ...style,
         bgColorNickname: "bg-inputBoxFocus",
-        shadowNickname: "drop-shadow-inputBoxShadow",
       }));
       if (value.trim() === "") {
         setStyle(() => ({
           ...style,
           bgColorNickname: "bg-inputBox",
-          shadowNickname: "",
         }));
       }
       if (nickNameReglationExp.test(value)) {
@@ -96,11 +88,8 @@ const SetProfileName = () => {
   };
 
   //모달창
-  const onModalOpen = () => {
-    setOpen({ isOpen: true });
-  };
   const onMoalClose = () => {
-    setOpen({ isOpen: false });
+    dispatch(__closeModal(dispatch));
   };
 
   const onNickNameCheck = (event) => {
@@ -117,10 +106,7 @@ const SetProfileName = () => {
     dispatch(
       __nickNameCheck({
         nickname: nickNameCurrent.value,
-        onModalOpen,
         setModalStr,
-        doubleCheck: doubleCheck,
-        setDoubleCheck: setDoubleCheck,
       })
     );
   };
@@ -160,7 +146,7 @@ const SetProfileName = () => {
       }));
       userNickNameCurrent.focus();
       return;
-    } else if (!doubleCheck) {
+    } else if (!nickNameDoubleCheck) {
       SetRegulation(() => ({
         ...regulation,
         regulationNickName: "닉네임 중복확인 해주세요.",
@@ -203,6 +189,7 @@ const SetProfileName = () => {
                   placeholder="사용자의 이름을 입력해주세요."
                   onChange={onValidity}
                   bgColor={style.bgColorName}
+                  maxLength={11}
                 />
               </div>
               <div>
@@ -224,8 +211,10 @@ const SetProfileName = () => {
                   ref={userNickNameRef}
                   placeholder="2~8자리 숫자,한글,영문을 입력해주세요."
                   onChange={onValidity}
-                  className={`${style.bgColorNickname} ${style.shadowNickname} w-full px-1 h-[50px] text-[16px]  placeholder-inputPlaceHoldText`}
-                  disabled={doubleCheck.nickNameDoubleCheck}
+                  maxLength={8}
+                  className={`${style.bgColorNickname} w-full px-1 h-[50px] text-[16px]  placeholder-inputPlaceHoldText`}
+                  disabled={nickNameDoubleCheck}
+                  autoComplete="off"
                 ></input>
                 <button
                   className="absolute right-[8px]  mt-[18px] font-[600] text-textBlack text-[16px]"
@@ -249,11 +238,7 @@ const SetProfileName = () => {
             </button>
           </div>
         </form>
-        <IsModal
-          isModalOpen={isOpen.isOpen}
-          onMoalClose={onMoalClose}
-          message={{ ModalStr }}
-        />
+        <IsModal onMoalClose={onMoalClose} message={{ ModalStr }} />
       </div>
     </>
   );

@@ -11,11 +11,11 @@ const FollowerCard = ({ follower }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [isFollowed, setIsFollowed] = useState(
-    follower.followStatus === "ACTIVE"
+    follower.followStatus === "INACTIVE"
   );
 
   const [btnColor, setBtnColor] = useState(
-    follower.followStatus === "ACTIVE" ? "#A31414" : "#002C51"
+    follower.followStatus === "INACTIVE" ? "#002C51" : "#A31414"
   );
 
   const handleClick = (e) => {
@@ -24,8 +24,8 @@ const FollowerCard = ({ follower }) => {
   };
 
   useLayoutEffect(() => {
-    if (isFollowed) setBtnColor("#A31414");
-    else setBtnColor("#002C51");
+    if (isFollowed) setBtnColor("#002C51");
+    else setBtnColor("#A31414");
   }, [follower]);
 
   return (
@@ -45,15 +45,23 @@ const FollowerCard = ({ follower }) => {
             alt="프로필"
           />
         </div>
-        <div className="flex w-[119px] items-center">{follower.username}</div>
+        <div className="flex w-[119px] text-sm font-[400px] items-center">
+          {follower.username}
+        </div>
       </div>
       {isFollowed ? (
-        <div className="flex items-center w-[62px] h-[39px] justify-center text-sm rounded-[4px] text-white bg-[#A31414]">
-          <span onClick={handleClick}>{isFollowed ? "삭제" : "팔로우"}</span>
+        <div
+          onClick={handleClick}
+          className="flex items-center w-[62px] h-[39px] cursor-pointer justify-center text-sm rounded-[4px] text-white bg-[#002C51]"
+        >
+          팔로우
         </div>
       ) : (
-        <div className="flex items-center w-[62px] h-[39px] justify-center text-sm rounded-[4px] text-white bg-[#002C51]">
-          <span onClick={handleClick}>{isFollowed ? "삭제" : "팔로우"}</span>
+        <div
+          onClick={handleClick}
+          className="flex items-center w-[62px] h-[39px] cursor-pointer justify-center text-sm rounded-[4px] text-white bg-[#A31414]"
+        >
+          삭제
         </div>
       )}
     </div>

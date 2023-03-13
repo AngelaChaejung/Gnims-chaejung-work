@@ -1,11 +1,12 @@
-import React, { useState } from "react";
+import React from "react";
 import Modal from "react-modal";
 import MoonLoader from "react-spinners/MoonLoader";
+import { useSelector } from "react-redux";
 
-const IsModal = ({ isModalOpen, onMoalClose, message, isLoding }) => {
+const IsModal = ({ onMoalClose, message, isLoding }) => {
   const modalStr = message.ModalStr;
+  const modalState = useSelector((state) => state.SingupSlice.modal);
 
-  const [modalIsOpen, setModalIsOpen] = useState(false);
   const modalStyle = {
     overlay: {
       position: "fixed",
@@ -16,7 +17,6 @@ const IsModal = ({ isModalOpen, onMoalClose, message, isLoding }) => {
       alignItems: "center",
       backgroundColor: "#53535339",
       zIndex: 10,
-      // width: "375px",
     },
     content: {
       justifyContent: "center",
@@ -33,17 +33,17 @@ const IsModal = ({ isModalOpen, onMoalClose, message, isLoding }) => {
       padding: "16px",
     },
   };
+
   return (
     <Modal
-      isOpen={isModalOpen}
+      isOpen={modalState.isOpen}
       style={modalStyle}
       ariaHideApp={false}
       aria={{
         labelledby: "heading",
         describedby: "full_description",
       }}
-      shouldCloseOnEsc={false}
-      onRequestClose={() => setModalIsOpen(false)}
+      shouldCloseOnEsc={true}
     >
       <div className="grid grid-flow-row gap-[20px] text-center">
         {isLoding ? (
@@ -59,7 +59,7 @@ const IsModal = ({ isModalOpen, onMoalClose, message, isLoding }) => {
         ) : (
           <>
             <div className="flex flex-col items-center gap-[14px] mt-[10px]">
-              <h1 className="px-[10px]  text-[#12396F] text-[18px] font-[700] whitespace-pre-line">
+              <h1 className="px-[10px]  text-[#12396F] text-[18px] font-[700] whitespace-pre">
                 {modalStr.modalTitle}
               </h1>
               <div className="h-[20px]">

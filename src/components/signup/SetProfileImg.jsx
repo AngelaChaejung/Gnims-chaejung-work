@@ -2,17 +2,15 @@ import React, { useState, useRef, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import profilImg from "../../img/ProfilImg.png";
 import inputImgIcon from "../../img/Component01.png";
-import { SignupApi } from "../../api/Signup";
 import IsModal from "../modal/Modal";
 import axios from "axios";
 import { useNavigate } from "react-router";
-import { instance } from "../../shared/AxiosInstance";
 import LoadingPage from "../../page/LoadingPage";
-
+import { __closeModal, __openModal } from "../../redux/modules/SingupSlice";
 const SetProfileImg = () => {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [isOpen, setOpen] = useState(false);
   const [ModalStr, setModalStr] = useState({
     modalTitle: "",
     modalMessage: "",
@@ -45,8 +43,7 @@ const SetProfileImg = () => {
       formData.append("image", null);
     }
     if (singup === "emailLogin") {
-      //const url = "http://hayangaeul.shop/auth/signup";
-      const url = "https://eb.jxxhxxx.shop/auth/signup";
+      const url = `${process.env.REACT_APP_BASE_URL}/auth/signup`;
       const data = {
         username: sessionStorage.getItem("userName"),
         nickname: sessionStorage.getItem("nickname"),
@@ -55,8 +52,7 @@ const SetProfileImg = () => {
       };
       sginupAxios({ data, formData, url });
     } else {
-      //const url = "http://hayangaeul.shop/social/signup";
-      const url = "https://eb.jxxhxxx.shop/social/signup";
+      const url = `${process.env.REACT_APP_BASE_URL}/social/signup`;
       const data = {
         username: sessionStorage.getItem("userName"),
         nickname: sessionStorage.getItem("nickname"),
@@ -69,11 +65,9 @@ const SetProfileImg = () => {
   };
 
   //모달창
-  const onModalOpen = () => {
-    setOpen({ isOpen: true });
-  };
+
   const onMoalClose = () => {
-    setOpen({ isOpen: false });
+    dispatch(__closeModal(dispatch));
     if (disabled) {
       navigate("/login");
     }
@@ -81,10 +75,8 @@ const SetProfileImg = () => {
 
   //이메일 회원가입시 백단 연결
   const sginupAxios = async ({ formData, data, url }) => {
-    console.log(data);
     const json = JSON.stringify(data);
     const blob = new Blob([json], { type: "application/json" });
-    console.log(blob);
     formData.append("data", blob);
 
     await axios
@@ -94,10 +86,9 @@ const SetProfileImg = () => {
         },
       })
       .then((response) => {
-        console.log(response.status);
         if (response.status === 201) {
           setDisabled(() => true);
-          console.log(response);
+
           setModalStr({
             modalTitle: "회원가입완료!",
             modalMessage: "그님스와 함께 약속들을 관리해보아요!",
@@ -107,20 +98,28 @@ const SetProfileImg = () => {
           sessionStorage.removeItem("password");
           sessionStorage.removeItem("nickname");
           sessionStorage.removeItem("singup");
-          onModalOpen();
+          dispatch(__openModal());
+          setLoading(false);
         }
       })
       .catch((error) => {
         setDisabled(() => false);
-        console.log(error.response);
         const { data } = error.response;
         if (data.status === 400) {
-          console.log(data.message);
-          setModalStr({
-            modalTitle: "다시 한 번 확인해주세요",
-            modalMessage: "닉네임과 이름을 다시 한 번 확인해주세요.",
-          });
-          onModalOpen();
+          if (Array.isArray(data.messages)) {
+            setModalStr({
+              modalTitle: data.messages[0],
+              modalMessage: "다시 한 번 확인해주세요",
+            });
+          } else {
+            setModalStr({
+              modalTitle: "다시 한 번 확인해주세요",
+              modalMessage: "닉네임과 이름을 다시 한 번 확인해주세요.",
+            });
+          }
+
+          dispatch(__openModal());
+          setLoading(false);
         }
       });
   };
@@ -188,11 +187,7 @@ const SetProfileImg = () => {
           </button>
         </div>
       </div>
-      <IsModal
-        isModalOpen={isOpen.isOpen}
-        onMoalClose={onMoalClose}
-        message={{ ModalStr }}
-      />
+      <IsModal onMoalClose={onMoalClose} message={{ ModalStr }} />
     </div>
   );
 };

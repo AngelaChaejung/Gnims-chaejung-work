@@ -1,8 +1,10 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import backIncom from "../../img/arrowback.png";
+import backIncom from "../../img/arrowback.svg";
+
 const TopNavTitleBar = ({ children }) => {
   const navigate = useNavigate();
+
   return (
     <div className="relative ">
       <div className="h-[48px] w-full bg-white flex items-center">
@@ -17,7 +19,7 @@ const TopNavTitleBar = ({ children }) => {
             }}
           />
         </div>
-        <div className="m-auto flex items-center text-textBlack font-lg text-[20px]">
+        <div className="m-auto flex items-center font-[700] leading-[24px] text-[20px]">
           {children}
         </div>
       </div>

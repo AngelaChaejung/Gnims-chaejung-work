@@ -1,13 +1,15 @@
 import { useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import NaverUnion from "../../img/NaverUnion.png";
 
 const NaverLogin = () => {
+  const navigate = useNavigate();
   const naverRef = useRef();
   const { naver } = window;
 
-  const NAVER_CLIENT_ID = "T9R5hFNUTuTa1UqoVBcO";
+  const NAVER_CLIENT_ID = process.env.REACT_APP_NAVER_CLIENT_ID;
   // process.env.REACT_APP_NAVER_CLIENT_ID;
-  const NAVER_CALLBACK_URL = "https://gnims.kr/social/naver-login";
+  const NAVER_CALLBACK_URL = process.env.REACT_APP_NAVER_CALLBACK_URL;
   // process.env.REACT_APP_NAVER_CALLBACK_URL;
   const initializeNaverLogin = () => {
     const naverLogin = new naver.LoginWithNaverId({
